@@ -129,20 +129,27 @@ PlotRFs_LGN(P,'locations');    % Draw the LGN RF locations ('locations','image',
 % P.stim.orientationDeg = [0:15:165]';  % Orientations of gabors
 % P.stim.phaseDeg = [0 90 180 270]';     % phase offset in degrees
 
-P.stim.name = 'Distributed Alex';
-spacing = 1/4;
-[X(:,:,1), X(:,:,2)] = meshgrid((spacing-1):spacing:(1-spacing));
-centers = reshape(permute(X, [3 1 2]), 2, [])';
-P.stim.center = centers;   % [x,y] Locations of stim within visual field, from [-1 -1] to [1 1] with [0 0] being centered 
-P.stim.sigmaArcmin_sf = [3 10; 1.5 20];              % Pairings for width of gabor (sigma in arcmin) across the stripes and spatial frequency (cpd).
-P.stim.aspectRatio = 1.5;             % Length of gabor along the stripes, relative to width
-P.stim.orientationDeg = (0:15:165)';  % Orientations of gabors
-P.stim.phaseDeg = [0 90 180 270]';     % phase offset in degrees
+% P.stim.name = 'Distributed Alex';
+% spacing = 1/4;
+% [X(:,:,1), X(:,:,2)] = meshgrid((spacing-1):spacing:(1-spacing));
+% centers = reshape(permute(X, [3 1 2]), 2, [])';
+% P.stim.center = centers;   % [x,y] Locations of stim within visual field, from [-1 -1] to [1 1] with [0 0] being centered 
+% P.stim.sigmaArcmin_sf = [3 10; 1.5 20];              % Pairings for width of gabor (sigma in arcmin) across the stripes and spatial frequency (cpd).
+% P.stim.aspectRatio = 1.5;             % Length of gabor along the stripes, relative to width
+% P.stim.orientationDeg = (0:15:165)';  % Orientations of gabors
+% P.stim.phaseDeg = [0 90 180 270]';     % phase offset in degrees
+
+P.stim.name = 'cd02A 4-by-3 derived';
+files = dir(['cd02A' filesep '*.png']);
+P.stim.fileNames = cell(1, length(files));
+for fileIdx = 1:length(files)
+    P.stim.fileNames{fileIdx} = ['cd02A' filesep files(fileIdx).name];
+end
 
 % for i = 1:size(stimuli.images,3); imagesc(stimuli.images(:,:,i)); drawnow; end;
 
 %% Synaptic weight updating rules
-P.update.rate = 1.0;                   % Overall learning rate (arbitrary units, 0 to 1)
+P.update.rate = 0.25;                   % Overall learning rate (arbitrary units, 0 to 1)
 P.update.eyeFlags = [true true];      % Allow re-learning by LE, RE RFs?       
 % The amount by which a synaptic weight changes is a function of the activity levels in both
 %   the pre-synaptic and post-synaptic neuron at a given time step. If both are active, increase
@@ -154,7 +161,7 @@ P.update.eyeFlags = [true true];      % Allow re-learning by LE, RE RFs?
 %% Run-time parameters for HebbCycle
 % P.runtime.nCycle = 4*288;
 % P.runtime.stimOrder = 'sequential';    % Otherwise 'random' or 'permutations' or a specific sequence.
-P.runtime.nCycle = 50000;
+P.runtime.nCycle = 500;
 P.runtime.stimOrder = 'random';
 
 
