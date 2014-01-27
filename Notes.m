@@ -88,7 +88,7 @@
 % weights changing over time in response to stimuli. Something that shows
 % order emerging out of chaos and thenceforth being maintained.
 
-%
+% This is a test comment to see how git works.
 %
 
 
