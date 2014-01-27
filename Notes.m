@@ -89,6 +89,6 @@
 % order emerging out of chaos and thenceforth being maintained.
 
 % This is a test comment to see how git works.
-%
+% Here is a second test comment.
 
 
