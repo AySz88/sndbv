@@ -58,6 +58,7 @@ for iCycle = 1:P.runtime.nCycle;
 %         figure     % Put each image into its own figure
         ShowRF(bn,LGN,'NormSeparately');                 % Create an image of the bn RF based on its weighted responses of LGN neurons
         drawnow
+%         pause
     end
 end
 

@@ -33,13 +33,18 @@
 %                * Learning rate
 %                * Type of input (distrib of gabors [later: natural images] and correlation between input to LE,RE
 %                * Jitter in LGN model, various parameters of LGN model
-%                * Separate ON and OFF pathways with different characteristics (RF size, response time) 
+%                * Separate ON and OFF pathways with different characteristics (RF size, response time)? 
 %  
 %   To do:
 %      Make movie of inputs (binocular gratings or natural stimuli), along with stim of LGN's and evolution of RF over time 
 %      Ask whether it matters if LGN RF centers are jittered (change to P.LGN.jitter in SNDBV_01_SetParams.m)
 %      Test whether a nonlinearity is needed to prevent BN from unlearning its good RF
 %      Train on stimuli with disparity, or systematically rotated, or different size 
+%      Try different starting BN's, e.g. repeat entire study for a 2nd, smaller one at a different location 
+%      What is the effect of different levels of noise in the RE RF at the outset?
+%      Why does training on natural images cause the LE subunit to start looking like the RE noise, but training on gabors does not?
+%        Is it that gabors do not excite the RE subunit, which is a white noise RF?
+%        Or is it that adding up the activities from those subunits does not have an effect? 
 %
 %   Modeling choices:
 %      This first version of the model is linear: every synapse has equal effect no matter which eye it comes from.  Thus

@@ -26,6 +26,8 @@ stimuli = BuildStimuli(P);
 %% Get starting response of the BN to all of the stimuli
 [responseBN, responseLGN] = GetBnResponse(bn, LGN, stimuli, P, true);  % Return the response of the BN to each of the stimuli 
 
+fprintf('sum(responseBN): %f\n', sum(responseBN));
+
 %% Hebbian learning attempt: update the weights 
 doPlotFlag = true;
 figure;

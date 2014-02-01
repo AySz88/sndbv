@@ -31,7 +31,26 @@ for iEye = 1:2
             Z_sur = exp(-(((P.X-center(1)).^2 + (P.Y-center(2)).^2))/(2*sigmaSur^2)) / (2*pi*sigmaSur^2);
             % Max filter responses are automatically normalized relative to each other assuming
             %   constant surroundSize, but not across changes in surroundSize.  For that we would
-            %   have to compute total absolute value. ###
+            %   have to compute total absolute value. 
+            % Normalize Z to be a balanced filter. This is necessary for filters at the edges of the image.
+            %   Volume of center is 1, volume of surround is -1, but if they are cut off at the edge than total is off.
+            %   We don't want the background outside the gabors to be non-zero however, so instead of adding a constant
+            %   we will rebalance by changing the relative weights of the two components. 
+            %   This is useful to look at: 
+            %     lgnMags = sum(sum(LGN(1).rf(:,:,:))); hist(squeeze(lgnMags));
+            %   It shows that of 976 LGN units, about 500 have the expected volume of 0, while others are positive or negative
+            %   depending where the center and surround fall relative to the border of the image area, in the range (-0.15, 0.30).
+            % Now, how to create a balanced filter that is not wacko? For example, if the filter is mostly out of the image
+            %   area, it will be negative, with surround dominating within the image. Say the surround has volume 0.3 and the 
+            %   center has volume 0.1 within the image region. What factors should the two regions be multiplied by? Let's just
+            %   split the difference. Ratio is 3.0, so multiply the center by sqrt(3) and multiply the surround by 1/sqrt(3). 
+            %   Now they have areas of 0.1*sqrt(3) and 0.3/sqrt(3), which are equal. 
+            ctrVol = sum(Z_ctr(:));
+            surVol = sum(Z_sur(:));
+            normingFactor = sqrt(ctrVol/surVol);
+            Z_ctr = Z_ctr / normingFactor;
+            Z_sur = Z_sur * normingFactor;
+            % Now take the difference to make the DOG.
             Z = Z_ctr - (Z_sur*P.LGN.surroundWeight);
             LGN(iEye).rf(:,:,iRF) = Z;
         end

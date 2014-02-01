@@ -1,10 +1,14 @@
 function outBN = NormalizeBN(inBN)
 % function bn = NormalizeBN(bn)
+%
+% This function normalizes all of the weights on the binocular neuron, 
+% without regard to eye of origin, so that the total response of the BN is
+% 1.0.
 
 outBN = inBN;
 return;
 
-maxResponse = norm([inBN(:).wRF], 'fro');
+maxResponse = norm([inBN(:).wRF], 'fro');   % Consider replacing with sum(sum(abs(mx)))
 for iEye = 1:2
     currentWeights = inBN(iEye).wRF;
     
