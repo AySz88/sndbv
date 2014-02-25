@@ -1,5 +1,5 @@
 function bn = BuildField_bn(P,LGN,RE_setup,randParam);
-% function bn = BuildField_bn(P,LGN);
+% function bn = BuildField_bn(P,LGN,RE_setup,randParam);
 %
 % Build receptive fields for binocular neuron using weights for each LGN neuron. 
 %

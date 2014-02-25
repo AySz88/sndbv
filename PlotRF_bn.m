@@ -35,7 +35,8 @@ Z = Gabor2(X-centerXY(1),Y-centerXY(2),sigma,aspRat,lambda,theta,phi);
 if strcmp(figureType,'image') | strcmp(figureType,'all')
     figure
     Z2 = flipud(Z);           % Convert y from increasing downward (row) to increasing upward (Y) 
-    colormap(gray(256));
+%     colormap(gray(256));
+    colormap(OnOffColormap(256));
     imagesc(Z2);
     axis image
     set(gca, 'XTick', [1 hiResSize(1)/2 hiResSize(1)], 'XTickLabel', {fieldExtentArcmin(1,1), 0, fieldExtentArcmin(1,2)});

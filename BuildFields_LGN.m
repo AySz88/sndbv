@@ -50,6 +50,7 @@ for iEye = 1:2
             normingFactor = sqrt(ctrVol/surVol);
             Z_ctr = Z_ctr / normingFactor;
             Z_sur = Z_sur * normingFactor;
+                if iEye==2 & iRF == 220, Z_sur = 0.5 * Z_sur; end  % ### Experiment to see if unbalanced LGN RF structure causes problems
             % Now take the difference to make the DOG.
             Z = Z_ctr - (Z_sur*P.LGN.surroundWeight);
             LGN(iEye).rf(:,:,iRF) = Z;

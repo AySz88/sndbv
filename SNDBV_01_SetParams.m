@@ -24,11 +24,14 @@ yVals = linspace(fieldExtentArcmin(2,1), fieldExtentArcmin(2,2), P.fieldResLGN(2
 
 %% Binocular RF properties for the single binoc neuron
 P.bn.RF.center = [0.2 -0.2];    % [x,y] Location of LE RF within visual field, from [-1 -1] to [1 1] with [0 0] being centered 
-P.bn.RF.sigmaArcmin = 3;        % Width of gabor (sigma in arcmin) across the stripes 
-P.bn.RF.aspectRatio = 1.5;      % Length of gabor along the stripes, relative to width
-P.bn.RF.orientationDeg = 15;    % Preferred orientation of well-tuned (LE) subunit (degrees), from 0 (horizontal 
+P.bn.RF.sigmaArcmin = 2.5;        % Width of gabor (sigma in arcmin) across the stripes 
+P.bn.RF.aspectRatio = 1.4;      % Length of gabor along the stripes, relative to width [get citation!]
+P.bn.RF.orientationDeg = 30;    % Preferred orientation of well-tuned (LE) subunit (degrees), from 0 (horizontal 
                                 %    modulation, vertical stripes) to 180.  > 0 is counter-clockwise rotation.
-P.bn.RF.sf = 10;                % Spatial frequency of the LE subunit (cpd). Note: at 10 cpd, 1 cycle is 6 arcmin
+P.bn.RF.sfBandwidth = 1.0;        % Spatial frequency bandwidth in octaves 
+lambdaArcmin = GetLambdaGabor(P.bn.RF.sigmaArcmin, P.bn.RF.sfBandwidth);   % Corresponding spatial wavelengths of cosine carriers 
+P.bn.RF.sf = 60./lambdaArcmin;  % Spatial frequency of the LE subunit (cpd). Is 11 if sigmaArcmin=3 and bandwidth=1.
+% P.bn.RF.sf = 10;              % Spatial frequency of the LE subunit (cpd). Note: at 10 cpd, 1 cycle is 6 arcmin
 P.bn.RF.phaseDeg = 90;          % phase offset in degrees
 P.bn.RF.disparity = nan;        % RE offset relative to LE (not used in SNDBV-1)
 
@@ -55,7 +58,7 @@ P.crossOrientInhib = nan;       % Amount of divisive normalization from other un
 P.rivalry = nan;                % Amount by which dissimilarity betwen the eyes causes lower constrast image to be downweighted
 P.andNonlinearity = nan;        % Extent to which BN fires only when both eyes' RF subunits are active  
 
-%% Circle-symmetric (LGN) RF properties. Note these RF's do not have surrounds yet
+%% Circle-symmetric (LGN) RF properties.
 
 % % Use this code for RANDOMLY CHOSEN LGN receptive fields. 
 % P.LGN.n = [100 100];            % Number of LGN neurons for each eye within the patch of visual field
@@ -107,38 +110,49 @@ for iSize = 1:P.LGN.RF(2).nSize
     P.LGN.RF(2).coords{iSize} = xyPrime;  % Set RE coords
 end
 
-PlotRFs_LGN(P,'locations');    % Draw the LGN RF locations ('locations','image', 'both', or 'none')
+% PlotRFs_LGN(P,'locations');    % Draw the LGN RF locations ('locations','image', 'both', or 'none')
 
 %% Training stimulus properties (training stimuli are binocular gaussians in SNDBV_01)
 % Stimulus images are all computed at the start of the simulation. Only one eye's input is used at this point for both eyes;
 %   disparity (if any) will be computed on the fly. Anyhow, to start we use binocularly correlated stimuli (0 disparity). 
 % Total number of training stimuli is product of the lengths of the different parameters. 
 
-% P.stim.center = [-0.2  0.2;  0.0  0.2;  0.2  0.2; ...
-%                  -0.2  0.0;  0.0  0.0;  0.2  0.0; ...
-%                  -0.2 -0.2;  0.0 -0.2;  0.2 -0.2  ];   % [x,y] Locations of stim within visual field, from [-1 -1] to [1 1] with [0 0] being centered 
-% P.stim.sigmaArcmin_sf = [3 10; 1.5 20];              % Pairings for width of gabor (sigma in arcmin) across the stripes and spatial frequency (cpd).
-% P.stim.aspectRatio = 1.5;             % Length of gabor along the stripes, relative to width
-% P.stim.orientationDeg = [0:15:165]';  % Orientations of gabors
-% P.stim.phaseDeg = [0 45 90 135]';     % phase offset in degrees
-% 
-% P.stim.name = 'Demo Set 1-C';
-% P.stim.center = [-0.7  0.7;  0.0  0.0;  0.2 -0.2  ];   % [x,y] Locations of stim within visual field, from [-1 -1] to [1 1] with [0 0] being centered 
-% P.stim.sigmaArcmin_sf = [3 10; 1.5 20];              % Pairings for width of gabor (sigma in arcmin) across the stripes and spatial frequency (cpd).
-% P.stim.aspectRatio = 1.5;             % Length of gabor along the stripes, relative to width
-% P.stim.orientationDeg = [0:15:165]';  % Orientations of gabors
-% P.stim.phaseDeg = [0 90 180 270]';     % phase offset in degrees
-% 
+%%%%%% Ben's new multiscale gabor stimuli, with more small ones than large ones %%%%%%
+% The goal here is a multi-scale pyramid set of gabors to use as training stimuli. We want to tile the visual field
+% using gabors. I think it works to make each scale 2x the previous (1-octave spacing in scale space). We actually want to
+% match the visual system's RFs so an overcomplete representation might actually be desireable. Of course, the smaller the
+% bandwidth (more lobes within the gaussian window) the closer together the scales must be. I'm guessing here, but let's try
+% a bandwidth of one octave (bandwidth of a gabor being sigma/lambda), and scale increases by an octave (factor of two).
+% Since we want the filters to have 1-octave bandwidth, we need sigma/lambda = 1.  Thus when sigma = 3 arcmin, lambda must be
+% 3 arcmin = 1/20 deg, so spatial freq is 20 cpd.
+
+% P.stim.name = 'Multiscale gabor';
+% P.stim.multiScaleGaborFlag = true;
+% P.stim.gaborBandwidth = 1.0;                   % This is on low side; reports are about 1.4 median, most 1.0 - 1.8.
+% P.stim.sigmaArcmin = 1.5 * 2.^[0 1 2 3 4 ]';  % Sizes of gabor envelopes (in direction across stripes--aspect ratio need not be 1.0)
+% lambdaArcmin = GetLambdaGabor(P.stim.sigmaArcmin, P.stim.gaborBandwidth);   % Corresponding spatial wavelengths of cosine carriers 
+% P.stim.spFreqCpd = 60./lambdaArcmin;           % Carrier spatial frequency (cpd) for each sigma value
+% P.stim.aspectRatio = 1.4;                      % Length of gabor along the stripes, relative to width
+% P.stim.orientationDeg = [0:30:150];         % orientations of gabors
+% P.stim.phaseDeg = [0 90 180 270];              % phase offset in degrees
+% P.stim.center0 = [0 0];                        % All spatial scales to be tiled with this as the center 
+% P.stim.spacingSigma = 3.0;                     % Center-to-center spacing of gabor stimuli within hex lattice, in sigma units
+
+%%%%%% Alex's gabor stimuli %%%%%%
 % P.stim.name = 'Distributed Alex';
 % spacing = 1/4;
-% [X(:,:,1), X(:,:,2)] = meshgrid((spacing-1):spacing:(1-spacing));
+% [X(:,:,1), X(:,:,2)] = meshgrid((spacing-1):spacing:(1-spacing));   % Position stimuli at e.g. -3/4, -1/2,...3/4 of way across image in both directions
 % centers = reshape(permute(X, [3 1 2]), 2, [])';
 % P.stim.center = centers;   % [x,y] Locations of stim within visual field, from [-1 -1] to [1 1] with [0 0] being centered 
-% P.stim.sigmaArcmin_sf = [3 10; 1.5 20];              % Pairings for width of gabor (sigma in arcmin) across the stripes and spatial frequency (cpd).
-% P.stim.aspectRatio = 1.5;             % Length of gabor along the stripes, relative to width
-% P.stim.orientationDeg = (0:15:165)';  % Orientations of gabors
-% P.stim.phaseDeg = [0 90 180 270]';     % phase offset in degrees
+% P.stim.sigmaArcmin_sf = [3 10; 1.5 20]; % Pairings for width of gabor (sigma in arcmin) across the stripes and spatial frequency (cpd).
+%                                         %    Bandwidth of these stimuli is sigma/lambda = (1/20 deg) / (1/10 deg) =  0.5 octaves, 
+%                                         %    which is low. But I am confused: increasing sigma makes the filter more selective. Shouldn't
+%                                         %    that mean the bandwidth has gone down? 
+% P.stim.aspectRatio = 1.4;               % Length of gabor along the stripes, relative to width
+% P.stim.orientationDeg = (0:15:165)';    % Orientations of gabors
+% P.stim.phaseDeg = [0 90 180 270]';      % phase offset in degrees
 
+%%%%% Natural image stimuli %%%%%%
 P.stim.name = 'cd02A 4-by-3 derived';
 files = dir(['cd02A' filesep '*.png']);
 P.stim.fileNames = cell(1, length(files));
@@ -146,10 +160,11 @@ for fileIdx = 1:length(files)
     P.stim.fileNames{fileIdx} = ['cd02A' filesep files(fileIdx).name];
 end
 
-%### for i = 1:size(stimuli.images,3); imagesc(stimuli.images(:,:,i)); drawnow; end;
-
 %% Synaptic weight updating rules
-P.update.rate = 0.25;                   % Overall learning rate (arbitrary units, 0 to 1)
+P.update.rate = 0.10;                  % Overall learning rate (arbitrary units, 0 to 1). With normalization of BN, 0.01 is good for gabors.
+                                      %    Consider tapering this off so that learning rate decreases over time, to get similar effect as
+                                      %    when BN was not normalized at each step. 
+                                      % 0.02 is good for natural images. 
 P.update.eyeFlags = [true true];      % Allow re-learning by LE, RE RFs?       
 % The amount by which a synaptic weight changes is a function of the activity levels in both
 %   the pre-synaptic and post-synaptic neuron at a given time step. If both are active, increase
@@ -161,8 +176,8 @@ P.update.eyeFlags = [true true];      % Allow re-learning by LE, RE RFs?
 %% Run-time parameters for HebbCycle
 % P.runtime.nCycle = 4*288;
 % P.runtime.stimOrder = 'sequential';    % Otherwise 'random' or 'permutations' or a specific sequence.
-P.runtime.nCycle = 1000;
 P.runtime.stimOrder = 'random';
+P.runtime.nCycle = 500;
 % P.runtime.normFlag = true;   % Normalize the training images to have mean luminance = 0
 
 

@@ -2,7 +2,7 @@ function coords = HexLattice(radius);
 % function coords = HexLattice(size);
 %
 % Create a hexagonal lattice with unit spacing that contains all lattice points out to
-% to the specified radius.  Lattice has unit spacing along the x-axis (thus
+% to the specified radius.  Lattice has unit spacing along the x-axis.
 % 
 %
 % Input:    radius (scalar)

@@ -44,8 +44,14 @@ function update = ReweightingRule01(responseBN, responseLGN, doPlotFlag)
 % Prediction: ON and OFF lgn neurons should work in pairs at cortical neurons
 % for purposes of learning!!!  I've never heard this before.  Is it already
 % known? You need for activity in the ON lgn neuron, correlated with activity in the BN,
-% to cause a decrease in weight for the OFF lgn neuron that has the same RF. Huh!
+% to cause a decrease in weight for the OFF lgn neuron that has the same
+% RF. Huh! (Or else it might work to make dW a function of current weight,
+% but if ON and OFF neurons are physically adjacent, why would they not
+% work in pairs? With the one that correlates better providing a down-weighting signal?)
 % 
+% NOTE: This reweighting rule probably isn't great. It might have the problem that you get
+% negative learning in situations where no learning would be appropriate.
+%
 % BB 11/11/2013
 
 if abs(responseBN) > 1

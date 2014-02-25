@@ -1,4 +1,4 @@
-function stimuli = BuildStimuli(P)
+function [stimuli, P_out] = BuildStimuli(P)
 % function stimuli = BuildStimuli(P)
 %
 % Construct a set of images to be shown to the binocular neuron.
@@ -8,12 +8,16 @@ function stimuli = BuildStimuli(P)
 % Output:   stimuli, with fields:
 %              images, a 3D array of images (xSize x ySize x nStim). Done with iStim last to avoid having to squeeze later (does it matter?) 
 %              type, an nStim x 5 list of stimulus characteristics if applicable (indices into: Ctr, sig_sf, aspRat, orient, phase) 
+%           P_out, updated parameter structure
 %
 % BB 11/10/2013
 
+P_out = P;
+
 if isfield(P.stim, 'fileNames')
     nStim = length(P.stim.fileNames);
-    disp(['Loading ' num2str(nStim) ' stimuli...']);
+    disp(['Loading ' num2str(nStim) ' stimuli for type ' P.stim.name '...']);
+
     
     stimuli.images = zeros([P.fieldResLGN nStim]);   % Allocate space for images
     stimuli.type   = zeros(nStim, 0);
@@ -21,16 +25,67 @@ if isfield(P.stim, 'fileNames')
     for fileIdx = 1:nStim
         stimuli.images(:, :, fileIdx) = double(imread(P.stim.fileNames{fileIdx})) ./ 255;
     end
-else
+    
+elseif isfield(P.stim, 'multiScaleGaborFlag') && P.stim.multiScaleGaborFlag == true  % && is the short-circuit 'and'
+
+    nSize = size(P.stim.sigmaArcmin,  1);   % Number of size scales to be included
+    nO = size(P.stim.orientationDeg,  2);   % Number of orientations
+    nP = size(P.stim.phaseDeg,        2);   % Number of phases
+    % nD = size(P.stim.disparityArcmin, 2);  % Not used for now
+
+    iStim = 0;
+    maxRadiusArcmin = ceil(sqrt(P.X(1,1)^2 + P.Y(1,1)^2));            % Diagonal radius to upper left corner of visual field in arcmin
+    aspRat = P.stim.aspectRatio;
+    
+    % Create list of stimulus descriptors
+    for iSize = 1:nSize
+         lambda = 60/P.stim.spFreqCpd(iSize);      % Wavelength in arcmin
+         gaborSpacing = P.stim.sigmaArcmin(iSize) * P.stim.spacingSigma;        % Inter-gabor spacing in arcmin
+         maxRadiusGabors = maxRadiusArcmin / gaborSpacing;                      % Diagonal radius in gabor-spacing units
+         centersXY = gaborSpacing * HexLattice(maxRadiusGabors);
+%          centers(abs(centers(:,1)) > XXX | abs(centers(:,2)) > XXX, :) = [];  % Remove centers that are outside of the visual field 
+         nCenter = size(centersXY,1);
+         centersXY = centersXY + repmat(P.stim.center0, nCenter, 1);
+         
+         for iCenter = 1:nCenter
+             for iO = 1:nO
+                 for iP = 1:nP
+                     iStim = iStim + 1;
+                     stimParams(iStim).ctrXY = centersXY(iCenter, :);
+                     stimParams(iStim).sigma = P.stim.sigmaArcmin(iSize);
+                     stimParams(iStim).aspRat = aspRat;
+                     stimParams(iStim).lambda = lambda;
+                     stimParams(iStim).theta = P.stim.orientationDeg(iO);
+                     stimParams(iStim).phi = P.stim.phaseDeg(iP);
+                 end
+             end
+         end
+    end
+    
+    % Create the stimuli
+    nStim = iStim;
+    disp(['Building ' num2str(nStim) ' stimuli of type ' P.stim.name '...']);
+    stimuli.images = zeros([P.fieldResLGN nStim]);   % Allocate space for images
+    stimuli.type   = zeros(nStim, 5);
+
+    for iStim = 1:nStim
+        p = stimParams(iStim);
+        Z = Gabor2(P.X-p.ctrXY(1),P.Y-p.ctrXY(2),p.sigma,p.aspRat,p.lambda,p.theta,p.phi);
+        stimuli.images(:,:,iStim) = Z;
+    end
+    
+    P_out.stim.stimParams = stimParams;
+    
+else    % Use original scheme to generate gabors
     nC = size(P.stim.center,          1);
     nS = size(P.stim.sigmaArcmin_sf,  1);
-    nA = size(P.stim.aspectRatio,     1);
-    nO = size(P.stim.orientationDeg,  1);
-    nP = size(P.stim.phaseDeg,        1);
+    nA = size(P.stim.aspectRatio,     2);
+    nO = size(P.stim.orientationDeg,  2);
+    nP = size(P.stim.phaseDeg,        2);
     % nD = size(P.stim.disparityArcmin, 1);  % Not used -- better to parameterize this so as to give trial-by-trial variation in disparity
 
     nStim = nC*nS*nA*nO*nP;
-    disp(['Building ' num2str(nStim) ' stimuli...']);
+    disp(['Building ' num2str(nStim) ' stimuli of type ' P.stim.name '...']);
 
     stimuli.images = zeros([P.fieldResLGN nStim]);   % Allocate space for images
     stimuli.type   = zeros(nStim, 5);
@@ -62,4 +117,6 @@ else
         end
     end
 end
+
+
 
