@@ -17,13 +17,23 @@ P_out = P;
 if isfield(P.stim, 'fileNames')
     nStim = length(P.stim.fileNames);
     disp(['Loading ' num2str(nStim) ' stimuli for type ' P.stim.name '...']);
+    
+    if P.stim.onTheFly
+        newSize = round(P.stim.rescale*P.stim.sourceSize);
+        stimuli.images = zeros([newSize nStim]);   % Allocate space for images
+        stimuli.type   = zeros(nStim, 0);
 
-    
-    stimuli.images = zeros([P.fieldResLGN nStim]);   % Allocate space for images
-    stimuli.type   = zeros(nStim, 0);
-    
-    for fileIdx = 1:nStim
-        stimuli.images(:, :, fileIdx) = double(imread(P.stim.fileNames{fileIdx})) ./ 255;
+        for fileIdx = 1:nStim
+            origImage = load(P.stim.fileNames{fileIdx});
+            stimuli.images(:, :, fileIdx) = imresize(origImage.LUM_Image, P.stim.rescale);
+        end
+    else
+        stimuli.images = zeros([P.fieldResLGN nStim]);   % Allocate space for images
+        stimuli.type   = zeros(nStim, 0);
+
+        for fileIdx = 1:nStim
+            stimuli.images(:, :, fileIdx) = double(imread(P.stim.fileNames{fileIdx})) ./ 255;
+        end
     end
     
 elseif isfield(P.stim, 'multiScaleGaborFlag') && P.stim.multiScaleGaborFlag == true  % && is the short-circuit 'and'

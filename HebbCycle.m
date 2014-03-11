@@ -48,8 +48,22 @@ for iCycle = 1:P.runtime.nCycle;
         error(['Unknown value for P.runtime.stimOrder: ' P.runtime.stimOrder]);
     end
     
-    oneStim.images = stimuli.images(:,:,iImage);
+    stimImage = stimuli.images(:,:,iImage);
+    rfSize = P.fieldResLGN;
+    
+    if size(stimImage) ~= rfSize
+        % Presume on-the-fly selection of subimage
+        sampleLoc = rand(1,2) .* (size(stimImage) - rfSize);
+        sampleLoc = floor(sampleLoc)+1;
+        stimImage = stimImage(sampleLoc(1):sampleLoc(1)+rfSize(1)-1, sampleLoc(2):sampleLoc(2)+rfSize(2)-1);
+        stimImage = stimImage - min(stimImage(:));
+        stimImage = stimImage ./ max(stimImage(:));
+        %fprintf('Image %i, (%i,%i)\n', iImage, sampleLoc(1), sampleLoc(2));
+    end
+    
+    oneStim.images = stimImage;
     oneStim.type = stimuli.type(iImage, :);         % not currently used
+    
     [responseBN, responseLGN] = GetBnResponse(bn, LGN, oneStim, P, 0);
     update = ReweightingRule02(responseBN, responseLGN, 0);      % reweighting rule should be set in SetParams file ideally
     for iEye = 1:2

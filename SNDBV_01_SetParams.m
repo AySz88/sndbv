@@ -153,8 +153,20 @@ end
 % P.stim.phaseDeg = [0 90 180 270]';      % phase offset in degrees
 
 %%%%% Natural image stimuli %%%%%%
-P.stim.name = 'cd02A 4-by-3 derived';
-files = dir(['cd02A' filesep '*.png']);
+% P.stim.name = 'cd02A 4-by-3 derived';
+% P.stim.onTheFly = false;
+% files = dir(['cd02A' filesep '*.png']);
+% P.stim.fileNames = cell(1, length(files));
+% for fileIdx = 1:length(files)
+%     P.stim.fileNames{fileIdx} = ['cd02A' filesep files(fileIdx).name];
+% end
+
+%%%%% Natural image stimuli (on the fly from x_LUM.mat files) %%%%%%
+P.stim.name = 'cd02A on the fly';
+P.stim.onTheFly = true;
+P.stim.sourceSize = [1007, 1519];
+P.stim.rescale = 0.25;
+files = dir(['cd02A' filesep '*.mat']);
 P.stim.fileNames = cell(1, length(files));
 for fileIdx = 1:length(files)
     P.stim.fileNames{fileIdx} = ['cd02A' filesep files(fileIdx).name];
